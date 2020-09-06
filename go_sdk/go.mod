@@ -1,3 +1,3 @@
-module go_sdk
+module github.com/ValeryPiashchynski/rgoshm
 
 go 1.12
