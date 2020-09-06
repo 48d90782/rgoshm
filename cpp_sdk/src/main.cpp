@@ -9,7 +9,7 @@
 
 #define STORAGE_SIZE 32
 
-//https://theboostcpplibraries.com/boost.interprocess-synchronization#:~:text=a%20different%20process.-,Boost.,referenced%20from%20programs%20by%20name.
+//https://theboostcpplibraries.com/boost.interprocess-shared-memory
 // returns file descriptor to the shared memory segment
 //extern "C" int open_shared_segment() {
 //   int fd = shm_open(STORAGE_ID1, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
