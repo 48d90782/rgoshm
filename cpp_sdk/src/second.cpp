@@ -24,6 +24,8 @@ int main() {
 
         auto *data = static_cast<trace_queue*>(addr);
 
+        std::cout << addr << std::endl;
+
         bool end_loop = false;
 
         do {

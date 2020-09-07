@@ -6,7 +6,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void *InitSegment(const char *name, size_t size);
+char *ReceiveData(char *name);
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void SendData(const char *name, const char *data);
 #ifdef __cplusplus
 }
 #endif

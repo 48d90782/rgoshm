@@ -1,7 +1,7 @@
 <?php
 $ffi = FFI::cdef(
-    "void *InitSegment(const char *name, size_t size);",
+    "void SendData(const char *name, const char *data);",
     "../lib/libshm.so");
 
-$data = $ffi->InitSegment("sample", 10000);
+$data = $ffi->SendData("data", "10000");
 var_dump($data);

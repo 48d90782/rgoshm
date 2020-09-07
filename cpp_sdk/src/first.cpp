@@ -39,6 +39,8 @@ int main() {
         void *addr = region.get_address();
         auto *data = new(addr)trace_queue;
 
+        std::cout << addr << std::endl;
+
         const int NumMsg = 100;
 
         for (int i = 0; i < NumMsg; ++i) {

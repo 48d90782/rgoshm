@@ -1,6 +1,5 @@
 package main
 /*
-#cgo CFLAGS: -I../lib
 #cgo LDFLAGS: -L../lib -lshm
 #include "../lib/rgoshm.h"
  */
@@ -9,6 +8,7 @@ import (
 )
 
 func main() {
-	a := C.InitSegment(C.CString("data"), 10000)
+	// "data" is the name of the mapped memory region
+	a := C.ReceiveData(C.CString("data"))
 	println(a)
 }
