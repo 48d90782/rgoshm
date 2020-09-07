@@ -1,2 +1,2 @@
 # rgoshm
-Shared memory written in Rust with bindings in Golang
+Shared memory library to share data between Golang (CGO) <-> PHP processes (FFI) written in C++ (Boost)
