@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 project(shm)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 18)
 enable_language(CXX C)
 
 find_package(Boost 1.73)
@@ -22,4 +23,5 @@ add_library(${CMAKE_PROJECT_NAME} SHARED ${goshm})
 target_link_libraries(${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} pthread rt)
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ../../../lib
-        COMMAND ${CMAKE_COMMAND} -E copy libshm.so ../../../lib)
+        COMMAND ${CMAKE_COMMAND} -E copy libshm.so ../../../lib
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_HOME_DIRECTORY}/src/rgoshm.h ../../../lib)

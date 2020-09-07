@@ -5,7 +5,10 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
 // return address of shared memory region
-extern "C" void *InitSegment(const char *name, size_t size) {
+#ifdef __cplusplus
+extern "C" {
+#endif
+void *InitSegment(const char *name, size_t size) {
     boost::interprocess::shared_memory_object shm(
             boost::interprocess::open_or_create,
             name,
@@ -23,8 +26,11 @@ extern "C" void *InitSegment(const char *name, size_t size) {
             boost::interprocess::read_write
     );
 
-
+    return region.get_address();
 }
+#ifdef __cplusplus
+}
+#endif
 
 extern "C" int RemoveSegment(void *address) {
     return 0;
