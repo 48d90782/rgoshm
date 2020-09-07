@@ -18,5 +18,8 @@ target_link_libraries(process1 ${Boost_LIBRARIES} pthread rt)
 add_executable(process2 ${_process2})
 target_link_libraries(process2 ${Boost_LIBRARIES} pthread rt)
 
-add_executable(shm ${goshm})
-target_link_libraries(shm ${Boost_LIBRARIES} pthread rt)
+add_library(${CMAKE_PROJECT_NAME} SHARED ${goshm})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} pthread rt)
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ../../../lib
+        COMMAND ${CMAKE_COMMAND} -E copy libshm.so ../../../lib)
