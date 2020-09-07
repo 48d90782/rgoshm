@@ -11,4 +11,4 @@ include_directories(${BOOST_INTERPROCESS_INCLUDE_DIRS})
 file(GLOB _src src/*.cpp src/*.h include/*.h)
 
 add_executable(${CMAKE_PROJECT_NAME} ${_src})
-target_link_libraries(${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} rt)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} pthread rt)
