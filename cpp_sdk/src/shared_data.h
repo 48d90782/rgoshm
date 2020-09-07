@@ -8,7 +8,7 @@
 
 struct trace_queue {
     enum {
-        LineSize = 100
+        LineSize = 200000000
     };
 
     trace_queue() : message_in(false) {}
@@ -23,7 +23,7 @@ struct trace_queue {
     boost::interprocess::interprocess_condition cond_full;
 
     // items
-    char items[LineSize]{};
+    char data[LineSize]{};
 
     // is there any message
     bool message_in;

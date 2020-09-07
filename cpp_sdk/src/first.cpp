@@ -37,28 +37,26 @@ int main() {
         );
 
         void *addr = region.get_address();
-        auto *data = new(addr)trace_queue;
-
-        std::cout << addr << std::endl;
+        auto *tq = new(addr)trace_queue;
 
         const int NumMsg = 100;
 
         for (int i = 0; i < NumMsg; ++i) {
-            scoped_lock<interprocess_mutex> lock(data->mutex);
-            if (data->message_in) {
-                data->cond_full.wait(lock);
+            scoped_lock<interprocess_mutex> lock(tq->mutex);
+            if (tq->message_in) {
+                tq->cond_full.wait(lock);
             }
             if ((NumMsg - 1) == i) {
-                std::sprintf(data->items, "%s", "last message");
+                std::sprintf(tq->data, "%s", "last message");
             } else {
-                std::sprintf(data->items, "%s_%d", "my_trace", i);
+                std::sprintf(tq->data, "%s_%d", "my_trace", i);
             }
 
             // notify to the other process that there is a message
-            data->cond_empty.notify_one();
+            tq->cond_empty.notify_one();
 
             // mark message buffer is full
-            data->message_in = true;
+            tq->message_in = true;
         }
 
 

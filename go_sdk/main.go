@@ -9,6 +9,8 @@ import (
 
 func main() {
 	// "data" is the name of the mapped memory region
-	a := C.ReceiveData(C.CString("data"))
-	println(a)
+	var a *C.char
+	a = C.ReceiveData(C.CString("data"))
+	str := C.GoString(a)
+	println(str)
 }

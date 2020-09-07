@@ -19,7 +19,7 @@ void SendData(const char *name, const char *data) {
     );
 
     try {
-        shm.truncate(10000);
+        shm.truncate(200000000);
 
         boost::interprocess::mapped_region region(
                 shm,
@@ -27,18 +27,15 @@ void SendData(const char *name, const char *data) {
         );
         void *addr = region.get_address();
         auto *tq = new(addr)trace_queue;
-        const int NumMsg = 100;
 
-        for (int i = 0; i < NumMsg; ++i) {
+        for (int i = 0; i < 2; ++i) {
             boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(tq->mutex);
             if (tq->message_in) {
                 tq->cond_full.wait(lock);
             }
-            if ((NumMsg - 1) == i) {
-                std::sprintf(tq->items, "%s", "last message");
-            } else {
-                std::sprintf(tq->items, "%s_%d", "my_trace", i);
-            }
+
+            // write data to the region
+            std::sprintf(tq->data, "%s", data);
 
             // notify to the other process that there is a message
             tq->cond_empty.notify_one();
@@ -46,22 +43,23 @@ void SendData(const char *name, const char *data) {
             // mark message buffer is full
             tq->message_in = true;
         }
+
     } catch (boost::interprocess::interprocess_exception &err) {
         std::cout << err.what() << std::endl;
     }
-
 }
 #ifdef __cplusplus
 }
 #endif
 
+// Receive data from the memory region
 #ifdef __cplusplus
 extern "C" {
 #endif
 char *ReceiveData(char *name) {
     boost::interprocess::shared_memory_object shm(
             boost::interprocess::open_only,
-            name,
+            "data",
             boost::interprocess::read_write
     );
 
@@ -73,56 +71,26 @@ char *ReceiveData(char *name) {
 
         void *addr = region.get_address();
 
-        auto *data = static_cast<trace_queue *>(addr);
+        auto *tq = static_cast<trace_queue *>(addr);
 
-        std::cout << addr << std::endl;
+        boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(tq->mutex);
+        if (!tq->message_in) {
+            tq->cond_empty.wait(lock);
+        }
 
-        bool end_loop = false;
+        // notify other processes that the buffer is empty
+        tq->message_in = false;
+        tq->cond_full.notify_one();
 
-        do {
-            boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(data->mutex);
-            if (!data->message_in) {
-                data->cond_empty.wait(lock);
-            }
-
-            if (std::strcmp(data->items, "last message") == 0) {
-                end_loop = true;
-            } else {
-                //print message
-                std::cout << data->items << std::endl;
-
-                // notify other processes that the buffer is empty
-                data->message_in = false;
-                data->cond_full.notify_one();
-            }
-        } while (!end_loop);
-        return data->items;
-
+        char *ret_str = static_cast<char *>(malloc(sizeof(tq->data)));
+        memcpy(ret_str, tq->data, sizeof(tq->data));
+        return ret_str;
     } catch (boost::interprocess::interprocess_exception &err) {
         std::cout << err.what() << std::endl;
     }
+    // no data
     return nullptr;
 }
 #ifdef __cplusplus
 }
 #endif
-
-extern "C" int RemoveSegment(void *address) {
-    return 0;
-}
-
-extern "C" {
-void Send(const char *message) {
-//        auto *data = new(region_address)trace_queue;
-//        for (int i = 0; i < 100; ++i) {
-//            boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock()
-//        }
-}
-}
-
-extern "C" {
-char *Receive() {
-
-    return "fasdf";
-}
-}

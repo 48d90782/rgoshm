@@ -22,27 +22,27 @@ int main() {
 
         void *addr = region.get_address();
 
-        auto *data = static_cast<trace_queue*>(addr);
+        auto *tq = static_cast<trace_queue*>(addr);
 
         std::cout << addr << std::endl;
 
         bool end_loop = false;
 
         do {
-            scoped_lock<interprocess_mutex> lock(data->mutex);
-            if (!data->message_in) {
-                data->cond_empty.wait(lock);
+            scoped_lock<interprocess_mutex> lock(tq->mutex);
+            if (!tq->message_in) {
+                tq->cond_empty.wait(lock);
             }
 
-            if (std::strcmp(data->items, "last message") == 0) {
+            if (std::strcmp(tq->data, "last message") == 0) {
                 end_loop = true;
             } else {
                 //print message
-                std::cout << data->items << std::endl;
+                std::cout << tq->data << std::endl;
 
                 // notify other processes that the buffer is empty
-                data ->message_in = false;
-                data->cond_full.notify_one();
+                tq ->message_in = false;
+                tq->cond_full.notify_one();
             }
         } while (!end_loop);
 

@@ -3,5 +3,8 @@ $ffi = FFI::cdef(
     "void SendData(const char *name, const char *data);",
     "../lib/libshm.so");
 
-$data = $ffi->SendData("data", "10000");
+ini_set('memory_limit','250M');
+
+$file = file_get_contents('./citylots.json', true);
+$data = $ffi->SendData("data", $file);
 var_dump($data);

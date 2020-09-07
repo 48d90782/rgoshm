@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-char *ReceiveData(char *name);
+char* ReceiveData(char *name);
 #ifdef __cplusplus
 }
 #endif
