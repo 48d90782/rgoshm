@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	seg, err := shm.NewSharedMemorySegment("safffffsadfasdfsadfffffff", 1000, shm.IPC_CREAT, shm.IPC_EXCL)
+	seg, err := shm.NewSharedMemorySegment("safffffsadfasdfsadfff123123ffff", 1000, shm.IPC_CREAT)
 	if err != nil {
 		panic(err)
 	}

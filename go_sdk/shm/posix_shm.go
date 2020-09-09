@@ -45,10 +45,21 @@ func NewSharedMemorySegment(key string, size uint, flags ...Flags) (*SharedMemor
 		return nil, errors.New(errno.Error())
 	}
 
-	data, err := syscall.Mmap()
-	if err != nil {
-		return err
+	data, _, errno := syscall.Syscall6(
+		syscall.SYS_MMAP,
+		0,
+		uintptr(size),
+		syscall.PROT_READ|syscall.PROT_WRITE,
+		syscall.MAP_ANON|syscall.MAP_PRIVATE,
+		addr,
+		0,
+	)
+	if errno != 0 {
+		return nil, errors.New(errno.Error())
 	}
+	ddd := *(*string)(unsafe.Pointer(&data))
+
+	ddd = "dafsfd"
 
 	return &SharedMemorySegment{
 		path:    path,
@@ -59,5 +70,5 @@ func NewSharedMemorySegment(key string, size uint, flags ...Flags) (*SharedMemor
 }
 
 func (s *SharedMemorySegment) ShmAT() error {
-
+	return nil
 }

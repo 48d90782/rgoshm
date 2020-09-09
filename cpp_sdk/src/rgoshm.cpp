@@ -28,22 +28,19 @@ void SendData(const char *name, const char *data) {
         void *addr = region.get_address();
         auto *tq = new(addr)trace_queue;
 
-        for (int i = 0; i < 2; ++i) {
-            boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(tq->mutex);
-            if (tq->message_in) {
-                tq->cond_full.wait(lock);
-            }
-
-            // write data to the region
-            std::sprintf(tq->data, "%s", data);
-
-            // notify to the other process that there is a message
-            tq->cond_empty.notify_one();
-
-            // mark message buffer is full
-            tq->message_in = true;
+        boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(tq->mutex);
+        if (tq->message_in) {
+            tq->cond_full.wait(lock);
         }
 
+        // write data to the region
+        std::sprintf(tq->data, "%s", data);
+
+        // notify to the other process that there is a message
+        tq->cond_empty.notify_one();
+
+        // mark message buffer is full
+        tq->message_in = true;
     } catch (boost::interprocess::interprocess_exception &err) {
         std::cout << err.what() << std::endl;
     }
