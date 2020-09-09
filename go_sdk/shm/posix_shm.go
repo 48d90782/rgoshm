@@ -2,6 +2,8 @@ package shm
 
 import (
 	"errors"
+	"os"
+	"reflect"
 	"syscall"
 	"unsafe"
 )
@@ -21,6 +23,7 @@ type SharedMemorySegment struct {
 	size    uint
 	flags   Flags
 	address uintptr
+	data    []byte
 }
 
 // key
@@ -37,38 +40,43 @@ func NewSharedMemorySegment(key string, size uint, flags ...Flags) (*SharedMemor
 		flgs = flgs | flags[i]
 	}
 
+	flgs = flgs | 0666
+
 	// second arg could be uintptr(0) - auto
 	// third arg - size
 	// fourth - shmflg (flags)
-	addr, _, errno := syscall.RawSyscall(syscall.SYS_SHMGET, uintptr(unsafe.Pointer(path)), uintptr(size), uintptr(flgs))
+	id, _, errno := syscall.RawSyscall(syscall.SYS_SHMGET, uintptr(unsafe.Pointer(path)), uintptr(size), uintptr(flgs))
+	if errno != 0 {
+		return nil, os.NewSyscallError("SYS_SHMGET", errno)
+	}
+
+	shmAddr, _, errno := syscall.RawSyscall(syscall.SYS_SHMAT, id, 0, 0)
 	if errno != 0 {
 		return nil, errors.New(errno.Error())
 	}
 
-	data, _, errno := syscall.Syscall6(
-		syscall.SYS_MMAP,
-		0,
-		uintptr(size),
-		syscall.PROT_READ|syscall.PROT_WRITE,
-		syscall.MAP_ANON|syscall.MAP_PRIVATE,
-		addr,
-		0,
-	)
-	if errno != 0 {
-		return nil, errors.New(errno.Error())
-	}
-	ddd := *(*string)(unsafe.Pointer(&data))
-
-	ddd = "dafsfd"
-
-	return &SharedMemorySegment{
+	segment := &SharedMemorySegment{
 		path:    path,
 		size:    size,
 		flags:   flgs,
-		address: addr,
-	}, nil
+		address: id,
+		data:    make([]byte, 0, 0),
+	}
+
+	sh := (*reflect.SliceHeader)(unsafe.Pointer(&segment.data))
+	sh.Len = 0
+	sh.Cap = int(size)
+	sh.Data = shmAddr
+
+	segment.data = *(*[]byte)(unsafe.Pointer(sh))
+
+	return segment, nil
 }
 
-func (s *SharedMemorySegment) ShmAT() error {
-	return nil
+func (s *SharedMemorySegment) Write(data []byte) {
+	s.data = append(s.data, data...)
+}
+
+func (s *SharedMemorySegment) Read() []byte {
+	return s.data
 }

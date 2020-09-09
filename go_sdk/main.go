@@ -5,10 +5,12 @@ import (
 )
 
 func main() {
-	seg, err := shm.NewSharedMemorySegment("safffffsadfasdfsadfff123123ffff", 1000, shm.IPC_CREAT)
+	seg, err := shm.NewSharedMemorySegment("424225342", 10000, shm.IPC_CREAT)
 	if err != nil {
 		panic(err)
 	}
 
-	_ = seg
+	seg.Write([]byte("fasdsdfasdf"))
+	dd := seg.Read()
+	_ = dd
 }
