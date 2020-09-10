@@ -60,13 +60,8 @@ type sembuf struct {
 	sem_flg int16  // /* Operation flags (IPC_NOWAIT and SEM_UNDO) */
 }
 
-func NewSemaphore() *Semaphore {
+func NewSemaphore(key string, numSem int, flags ...Flag) *Semaphore {
 	return &Semaphore{}
-}
-
-// Wait waits until data will be written (semaphore unlocked in the other process)
-func (s *Semaphore) Wait() error {
-	return nil
 }
 
 // int semget(key_t key , int nsems , int semflg );
@@ -95,4 +90,13 @@ func (s *Semaphore) GetValue(key string, numSems int, flags ...Flag) (int, error
 	s.id = int(val)
 
 	return int(val), nil
+}
+
+func (s *Semaphore) Wait(semid int) error {
+	wait := sembuf{sem_num: uint16(1), sem_op: -1, sem_flg: 0x0}
+	_, _, errno := syscall.Syscall(syscall.SYS_SEMOP, uintptr(semid), uintptr(unsafe.Pointer(&wait)), uintptr(1))
+	if errno != 0 {
+		return errors.New(errno.Error())
+	}
+	return nil
 }
