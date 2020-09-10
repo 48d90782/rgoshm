@@ -1,5 +1,11 @@
 package semaphore
 
+import (
+	"errors"
+	"syscall"
+	"unsafe"
+)
+
 /* The following System V style IPC functions implement a semaphore
    handling.  The definition is found in XPG2.  */
 
@@ -31,6 +37,18 @@ package semaphore
 //level that permits the operation to be performed without resulting in a nega-
 //tive value. The calling process must have alter permission on the semaphore.
 
+type Flag int
+
+const (
+	IPC_CREAT  Flag = 01000 /* Create key if key does not exist. */
+	IPC_EXCL   Flag = 02000 /* Fail if key exists.  */
+	IPC_NOWAIT Flag = 04000
+
+	IPC_RMID Flag = 0 /* Remove identifier.  */
+	IPC_SET  Flag = 1 /* Set `ipc_perm' options.  */
+	IPC_STAT Flag = 2 /* Get `ipc_perm' options.  */
+)
+
 type Semaphore struct {
 	id            int
 	numSemaphores int
@@ -38,8 +56,8 @@ type Semaphore struct {
 
 type sembuf struct {
 	sem_num uint16 // according to the standard, unsigned short should be at least 2 bytes
-	sem_op  int16 // /* Operation to be performed */
-	sem_flg int16 // /* Operation flags (IPC_NOWAIT and SEM_UNDO) */
+	sem_op  int16  // /* Operation to be performed */
+	sem_flg int16  // /* Operation flags (IPC_NOWAIT and SEM_UNDO) */
 }
 
 func NewSemaphore() *Semaphore {
@@ -49,4 +67,32 @@ func NewSemaphore() *Semaphore {
 // Wait waits until data will be written (semaphore unlocked in the other process)
 func (s *Semaphore) Wait() error {
 	return nil
+}
+
+// int semget(key_t key , int nsems , int semflg );
+// flags which can be used:
+// IPC_CREAT - If no semaphore set with the specified key exists, create a new set.
+// IPC_EXCL If IPC_CREAT was also specified, and a semaphore set with the specified key already exists, fail with the error EEXIST
+// return semaphore ID
+func (s *Semaphore) GetValue(key string, numSems int, flags ...Flag) (int, error) {
+	path, err := syscall.BytePtrFromString(key)
+	if err != nil {
+		return -1, err
+	}
+
+	// OR flags
+	var flgs Flag
+	for i := 0; i < len(flags); i++ {
+		flgs = flgs | flags[i]
+	}
+	flgs = flgs | 0666
+
+	val, _, errno := syscall.Syscall(syscall.SYS_SEMGET, uintptr(unsafe.Pointer(path)), uintptr(numSems), uintptr(flgs))
+	if errno != 0 {
+		return -1, errors.New(errno.Error())
+	}
+	//
+	s.id = int(val)
+
+	return int(val), nil
 }
