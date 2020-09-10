@@ -73,6 +73,8 @@ func NewSharedMemorySegment(key string, size uint, flags ...Flags) (*SharedMemor
 	return segment, nil
 }
 
+// write is not thread safe operation
+// should be protected via semaphore
 func (s *SharedMemorySegment) Write(data []byte) {
 	s.data = append(s.data, data...)
 }

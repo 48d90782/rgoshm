@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdio>
 #include "shared_data.h"
+#include <sys/sem.h>
 
 
 using namespace boost::interprocess;
