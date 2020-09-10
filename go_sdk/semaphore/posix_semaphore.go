@@ -115,13 +115,14 @@ func (s *Semaphore) GetValue(key string) (int, error) {
 
 func (s *Semaphore) Wait() error {
 	sops := &sembuf{
-		sem_num: 0,
-		sem_op:  1,
+		sem_num: 0, // sem number is the semaphor number in the set. If you declared nsems 1, here should be 0
+		sem_op:  -1, // operation
 		sem_flg: 0,
 	}
 
 	// int semop(int semid , struct sembuf * sops , unsigned int nsops );
-	_, _, errno := syscall.Syscall(syscall.SYS_SEMOP, uintptr(s.semid), uintptr(unsafe.Pointer(sops)), uintptr(1))
+	// The sops argument is a pointer to an array that contains the operations to be performed, and nsops gives the size of this array
+	_, _, errno := syscall.Syscall(syscall.SYS_SEMOP, s.semid, uintptr(unsafe.Pointer(sops)), uintptr(1))
 	if errno != 0 {
 		return errors.New(errno.Error())
 	}
