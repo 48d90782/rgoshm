@@ -50,8 +50,11 @@ const (
 )
 
 type Semaphore struct {
-	id            int
-	numSemaphores int
+	key    *byte
+	nsems  int
+	semflg Flag
+
+	semid uintptr
 }
 
 type sembuf struct {
@@ -60,8 +63,35 @@ type sembuf struct {
 	sem_flg int16  // /* Operation flags (IPC_NOWAIT and SEM_UNDO) */
 }
 
-func NewSemaphore(key string, numSem int, flags ...Flag) *Semaphore {
-	return &Semaphore{}
+func NewSemaphore(key string, nsems int, permission int, semflg ...Flag) (*Semaphore, error) {
+	path, err := syscall.BytePtrFromString(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// OR flags
+	var flgs Flag
+	for i := 0; i < len(semflg); i++ {
+		flgs = flgs | semflg[i]
+	}
+
+	if permission != 0 {
+		flgs = flgs | Flag(permission)
+	} else {
+		flgs = flgs | 0600 // default permission
+	}
+
+	semid, _, errno := syscall.Syscall(syscall.SYS_SEMGET, uintptr(unsafe.Pointer(path)), uintptr(nsems), uintptr(flgs))
+	if errno != 0 {
+		return nil, errors.New(errno.Error())
+	}
+
+	return &Semaphore{
+		key:    path,
+		nsems:  nsems, // number of semaphores in the set
+		semflg: flgs,
+		semid:  semid,
+	}, nil
 }
 
 // int semget(key_t key , int nsems , int semflg );
@@ -69,32 +99,29 @@ func NewSemaphore(key string, numSem int, flags ...Flag) *Semaphore {
 // IPC_CREAT - If no semaphore set with the specified key exists, create a new set.
 // IPC_EXCL If IPC_CREAT was also specified, and a semaphore set with the specified key already exists, fail with the error EEXIST
 // return semaphore ID
-func (s *Semaphore) GetValue(key string, numSems int, flags ...Flag) (int, error) {
+func (s *Semaphore) GetValue(key string) (int, error) {
 	path, err := syscall.BytePtrFromString(key)
 	if err != nil {
 		return -1, err
 	}
 
-	// OR flags
-	var flgs Flag
-	for i := 0; i < len(flags); i++ {
-		flgs = flgs | flags[i]
-	}
-	flgs = flgs | 0666
-
-	val, _, errno := syscall.Syscall(syscall.SYS_SEMGET, uintptr(unsafe.Pointer(path)), uintptr(numSems), uintptr(flgs))
+	semid, _, errno := syscall.Syscall(syscall.SYS_SEMGET, uintptr(unsafe.Pointer(path)), uintptr(s.nsems), uintptr(s.semflg))
 	if errno != 0 {
 		return -1, errors.New(errno.Error())
 	}
-	//
-	s.id = int(val)
 
-	return int(val), nil
+	return int(semid), nil
 }
 
-func (s *Semaphore) Wait(semid int) error {
-	wait := sembuf{sem_num: uint16(1), sem_op: -1, sem_flg: 0x0}
-	_, _, errno := syscall.Syscall(syscall.SYS_SEMOP, uintptr(semid), uintptr(unsafe.Pointer(&wait)), uintptr(1))
+func (s *Semaphore) Wait() error {
+	sops := &sembuf{
+		sem_num: 0,
+		sem_op:  1,
+		sem_flg: 0,
+	}
+
+	// int semop(int semid , struct sembuf * sops , unsigned int nsops );
+	_, _, errno := syscall.Syscall(syscall.SYS_SEMOP, uintptr(s.semid), uintptr(unsafe.Pointer(sops)), uintptr(1))
 	if errno != 0 {
 		return errors.New(errno.Error())
 	}
