@@ -19,6 +19,9 @@ target_link_libraries(process1 ${Boost_LIBRARIES} pthread rt)
 add_executable(process2 ${_process2})
 target_link_libraries(process2 ${Boost_LIBRARIES} pthread rt)
 
+add_executable(xsi src/xsi_shared.cpp)
+target_link_libraries(xsi ${Boost_LIBRARIES} pthread rt)
+
 add_library(${CMAKE_PROJECT_NAME} SHARED ${goshm})
 target_link_libraries(${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} pthread rt)
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD

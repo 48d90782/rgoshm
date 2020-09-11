@@ -22,6 +22,7 @@ int main() {
         }
     } remover;
 
+    SHM_RDONLY
     shared_memory_object shm(
             create_only,
             SHARED_MEMORY_NAME,
