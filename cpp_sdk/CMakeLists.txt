@@ -19,7 +19,7 @@ target_link_libraries(process1 ${Boost_LIBRARIES} pthread rt)
 add_executable(process2 ${_process2})
 target_link_libraries(process2 ${Boost_LIBRARIES} pthread rt)
 
-add_executable(xsi src/xsi_shared.cpp)
+add_executable(xsi src/systemV_semaphore.cpp)
 target_link_libraries(xsi ${Boost_LIBRARIES} pthread rt)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED ${goshm})
